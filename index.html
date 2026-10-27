@@ -66,7 +66,12 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <div id="wizard3" class="hidden"><h2>План подготовлен</h2><p id="chosen"></p><p>Следующий этап проекта — интеграция безопасной диагностики и проверенных правил совместимости.</p><button class="secondary" id="exportPlan">Скачать план (JSON)</button></div>
 <div class="row"><button class="secondary" id="back" disabled>Назад</button><button class="action" id="next">Продолжить →</button></div></div>
 </section>
-<section id="hardware" class="panel hidden"><div class="card"><h2>Эталонная конфигурация (пример)</h2><dl><dt>Процессор</dt><dd>Intel Core i5-12400</dd><dt>Оперативная память</dt><dd>32 ГБ</dd><dt>Сетевой адаптер</dt><dd>Realtek RTL8125 · 2.5GbE</dd><dt>Профиль модели</dt><dd>DS925+ (тестовая цель)</dd><dt>Текущая DSM</dt><dd>7.2.2 (исторические данные)</dd><dt>Хранилище</dt><dd>SHR-1 · 3 × 6 ТБ</dd><dt>DSM 7.4</dt><dd class="yellow">Совместимость не проверена</dd></dl></div></section>
+<section id="hardware" class="panel hidden"><div class="card"><h2>Данные оборудования</h2>
+<p>Теперь можно загрузить локальный диагностический JSON-файл. Обработка происходит только в браузере. Файл никуда не отправляется.</p>
+<label for="hardwareFile">Импорт отчёта NAS Shell (.json)</label><input id="hardwareFile" type="file" accept=".json,application/json" style="max-width:100%;padding:12px;background:#1b3045;border-radius:10px">
+<div class="notice" id="hardwareImportStatus" role="status">⚠ Реальная диагностика ещё не подключена. Ниже показан пример.</div>
+<div id="hardwareImported" class="hidden"><h2>Загруженные сведения</h2><dl id="hardwareImportedList"></dl><p class="small">Импорт не подтверждает совместимость с DSM и не разрешает обновление.</p><button class="secondary" id="clearHardware">Вернуться к примеру</button></div>
+<div id="hardwareSample"><h2>Эталонная конфигурация (пример)</h2><dl><dt>Процессор</dt><dd>Intel Core i5-12400</dd><dt>Оперативная память</dt><dd>32 ГБ</dd><dt>Сетевой адаптер</dt><dd>Realtek RTL8125 · 2.5GbE</dd><dt>Профиль модели</dt><dd>DS925+ (тестовая цель)</dd><dt>Текущая DSM</dt><dd>7.2.2 (исторические данные)</dd><dt>Хранилище</dt><dd>SHR-1 · 3 × 6 ТБ</dd><dt>DSM 7.4</dt><dd class="yellow">Совместимость не проверена</dd></dl></div></div></section>
 <section id="compat" class="panel hidden">
 <div class="card"><h2>Предварительная проверка совместимости</h2><p>Проверка демонстрационная. Нет подтверждённой базы поддержки моделей, драйверов и версий DSM.</p>
 <label for="modelChoice">Профиль устройства</label><select id="modelChoice"><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select>
@@ -89,6 +94,24 @@ let step=1;function renderStep(){for(let i=1;i<=3;i++){document.getElementById("
 document.getElementById("next").addEventListener("click",()=>{step=step===3?1:step+1;renderStep()});
 document.getElementById("back").addEventListener("click",()=>{if(step>1)step--;renderStep()});
 document.getElementById("reportText").textContent=JSON.stringify(sample,null,2);
+let importedHardware=null;
+const fileInput=document.getElementById("hardwareFile");
+function resetHardware(){importedHardware=null;fileInput.value="";document.getElementById("hardwareSample").classList.remove("hidden");document.getElementById("hardwareImported").classList.add("hidden");document.getElementById("hardwareImportStatus").textContent="⚠ Реальная диагностика ещё не подключена. Ниже показан пример.";}
+document.getElementById("clearHardware").addEventListener("click",resetHardware);
+fileInput.addEventListener("change",async event=>{
+ const file=event.target.files[0];if(!file)return;
+ const status=document.getElementById("hardwareImportStatus");
+ if(file.size>65536){resetHardware();status.textContent="Ошибка: файл больше 64 КБ.";return;}
+ try{
+ const data=JSON.parse(await file.text());
+ if(!data||typeof data!=="object"||Array.isArray(data)||data.schemaVersion!==1||data.kind!=="nas-shell-hardware"||!data.hardware||typeof data.hardware!=="object"||Array.isArray(data.hardware))throw Error("Неверный формат отчёта NAS Shell v1.");
+ const keys=[["cpu","Процессор"],["ram","Оперативная память"],["nic","Сетевой адаптер"],["storage","Накопители"]];
+ const list=document.getElementById("hardwareImportedList");list.replaceChildren();
+ for(const [key,label] of keys){const value=data.hardware[key];if(value!==undefined && (typeof value!=="string"||value.length>200))throw Error("Некорректное поле: "+key);
+ const dt=document.createElement("dt");dt.textContent=label;const dd=document.createElement("dd");dd.textContent=value||"Не определено";list.append(dt,dd);}
+ importedHardware=data;document.getElementById("hardwareSample").classList.add("hidden");document.getElementById("hardwareImported").classList.remove("hidden");status.textContent="✓ Файл загружен локально. Достоверность сведений и совместимость не подтверждены.";
+ }catch(e){resetHardware();status.textContent="Ошибка импорта: "+e.message;}
+});
 function compatibilityResult(){return {mode:"demo",profile:document.getElementById("modelChoice").value,targetDsm:document.getElementById("dsmChoice").value,hardware:"sample-not-detected",status:"unverified",reasons:["Нет проверенной матрицы совместимости","Нет проверки драйверов на реальном оборудовании"],safeToUpgrade:false,writesEnabled:false}}
 function updateCompatibility(){const result=compatibilityResult();document.getElementById("compatResult").textContent="⚠ Статус: НЕ ПРОВЕРЕНО. "+result.profile+" / DSM "+result.targetDsm+". Не обновляйте рабочий NAS на основании этой демонстрации."}
 document.getElementById("modelChoice").addEventListener("change",updateCompatibility);

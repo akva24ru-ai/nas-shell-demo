@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "kind": "nas-shell-hardware",
+  "source": "demo-sample-not-scanned",
+  "hardware": {
+    "cpu": "Intel Core i5-12400",
+    "ram": "32 ГБ",
+    "nic": "Realtek RTL8125 · 2.5GbE",
+    "storage": "3 × 6 ТБ (демонстрационные сведения)"
+  }
+}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>NAS Shell — Прототип 0.5 Demo</title>
+<title>NAS Shell — Прототип 0.6 Demo</title>
 <style>
 html{width:100%;max-width:100%;overflow-x:clip;-webkit-text-size-adjust:100%;text-size-adjust:100%}:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e9f1f8;background:#0b111b}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 85% 0,#193653 0,transparent 36%),#0b111b}
@@ -28,7 +28,7 @@ p{color:#a7bacd;line-height:1.6}h2{font-size:19px;margin:0 0 18px}
 .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
 .panel{margin-top:24px}.hidden{display:none}
 .steps{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.step{padding:9px 12px;border-radius:9px;background:#21344a;color:#b5c9d8}.step.current{background:#27667c;color:#fff}
-.scan-box{margin:18px 0;padding:18px;background:#10293a;border:1px solid #36718a;border-radius:14px}.scan-box h3{margin:0 0 8px;font-size:17px}.scan-box p{margin:8px 0}.scan-progress{width:100%;height:12px;accent-color:#50b8d7}.scan-error{background:#321f27;border-color:#87434f;color:#ffd3d8}.scan-success{background:#132f2a;border-color:#36745f;color:#b8f1d4}.scan-demo{display:inline-block;margin-left:8px;padding:3px 8px;border:1px solid #7b6432;border-radius:999px;color:#f1dba2;font-size:11px;font-weight:700;letter-spacing:.06em}
+.progress{width:100%;height:10px;accent-color:#50b8d7}
 dl{display:grid;grid-template-columns:minmax(130px,220px) 1fr;gap:13px 18px;margin:0}dt{color:#9eb1c6}dd{margin:0;font-weight:600}
 label{display:block;margin:12px 0;color:#c9d9e8}select{width:100%;max-width:420px;padding:12px;border-radius:10px;background:#1b3045;border:1px solid #4a647c;color:#fff}
 pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;background:#091522;border-radius:12px;padding:18px;color:#aee5db}
@@ -39,7 +39,7 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <body>
 <div class="layout">
 <aside>
-<div class="brand">NAS <span>Shell</span></div><div class="small">Smart NAS Boot &amp; Management</div><div class="badge">0.5 Demo · DEMO</div>
+<div class="brand">NAS <span>Shell</span></div><div class="small">Smart NAS Boot &amp; Management</div><div class="badge">0.6 · DEMO</div>
 <nav aria-label="Разделы">
 <button class="active" data-view="home">◈ Обзор</button>
 <button data-view="wizard">▤ Мастер настройки</button>
@@ -55,77 +55,49 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <section id="home" class="panel">
 <div class="grid">
 <div class="card"><div class="muted">Состояние</div><div class="metric green">Демо-режим</div><p>Операции записи отключены.</p></div>
-<div class="card"><div class="muted">Версия DSM</div><div class="metric">7.4 · цель</div><p>Совместимость ещё не подтверждена.</p></div>
+<div class="card"><div class="muted">Версия DSM</div><div class="metric">DEMO · 7.4 · цель</div><p>Совместимость ещё не подтверждена.</p></div>
 <div class="card"><div class="muted">Проверка системы</div><div class="metric yellow">Не выполнена</div><p>Диагностика пока использует тестовые данные.</p></div>
 </div>
 <div class="card panel"><h2>С чего начать?</h2><p>Пройдите демонстрационный мастер: выберите сценарий, проверьте параметры и получите итоговый план. Изменения не применяются.</p><button class="action" data-goto="wizard">Открыть мастер →</button></div>
 </section>
 <section id="wizard" class="panel hidden">
-<div class="card"><h2>Мастер подготовки</h2><div class="steps"><span class="step current" id="step1">1 · Сценарий</span><span class="step" id="step2">2 · Проверка</span><span class="step" id="step3">3 · Результат</span></div>
-<div id="wizard1"><label for="scenario">Что вы хотите сделать?</label><select id="scenario"><option value="new">Подготовить новый NAS</option><option value="upgrade">Проверить возможность обновления DSM</option><option value="recover">Подготовить диагностику восстановления</option></select><p>На этом этапе мастер только формирует демонстрационный план.</p></div>
-<div id="wizard2" class="hidden"><p>Проверка совместимости с DSM 7.4: <strong class="yellow">не подтверждена</strong>.</p><p>Автоматическое обнаружение оборудования пока не подключено. Любое обновление действующего NAS запрещено.</p></div>
-<div id="wizard3" class="hidden"><h2>План подготовлен</h2><p id="chosen"></p><p>Следующий этап проекта — интеграция безопасной диагностики и проверенных правил совместимости.</p><button class="secondary" id="exportPlan">Скачать план (JSON)</button></div>
+<div class="card"><h2>Мастер подготовки конфигурации</h2><div class="steps"><span class="step current" id="step1">1 · Оборудование</span><span class="step" id="step2">2 · Модель</span><span class="step" id="step3">3 · DSM</span><span class="step" id="step4">4 · Совместимость</span><span class="step" id="step5">5 · Итог</span></div>
+<div id="wizard1"><p>Мастер использует последний диагностический отчёт. Если сведений нет, будет указано «Не определено».</p><dl id="setupHardwareSummary"></dl></div>
+<div id="wizard2" class="hidden"><label for="wizardModel">Модель Synology</label><select id="wizardModel"><option value="">Выберите модель</option><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select><p class="small">Наличие модели в каталоге не подтверждает поддержку.</p></div>
+<div id="wizard3" class="hidden"><label for="wizardDsm">Версия DSM</label><select id="wizardDsm"><option value="">Выберите версию</option><option value="7.2">DSM 7.2</option><option value="7.3">DSM 7.3</option><option value="7.4">DSM 7.4</option></select><p class="small">Отображение версии не означает поддержку моделью или ARC Loader.</p></div>
+<div id="wizard4" class="hidden"><h3>Результат проверки</h3><div class="notice" id="wizardCompatibility" aria-live="polite">Совместимость не подтверждена. Проверенные данные отсутствуют.</div><p>Реальные проверки моделей, DSM и ARC Loader на этом этапе не выполняются.</p></div>
+<div id="wizard5" class="hidden"><h3>Итоговая конфигурация</h3><dl id="setupProjectSummary"></dl><div class="notice">DEMO · Настоящий загрузочный образ не создаётся. ARC и DSM не изменяются.</div><button class="secondary" id="exportPlan">Сохранить проект в JSON</button></div>
+<p class="yellow" id="setupError" role="status" aria-live="polite"></p>
 <div class="row"><button class="secondary" id="back" disabled>Назад</button><button class="action" id="next">Продолжить →</button></div></div>
 </section>
 <section id="hardware" class="panel hidden"><div class="card"><h2>Данные оборудования</h2>
-<p>Автоматическое сканирование в этой версии работает только на демонстрационных данных. Оно не обращается к NAS и не выполняет сетевых запросов.</p>
-<div class="row"><button class="action" id="scanHardware">Сканировать оборудование</button><span class="scan-demo">DEMO</span></div>
-<div class="scan-box hidden" id="scanProgress" role="status" aria-live="polite" aria-atomic="true"><h3 id="scanProgressTitle">Подготовка</h3><p id="scanProgressText">Сканирование ещё не началось.</p><progress class="scan-progress" id="scanProgressBar" max="4" value="0" aria-label="Ход демонстрационного сканирования"></progress></div>
+<p>В 0.6 автоматическая диагностика остаётся демонстрационной. Сведения не получаются с NAS.</p>
+<div class="row"><button class="action" id="scanHardware">Сканировать оборудование</button><span class="badge">DEMO</span></div>
+<div class="panel hidden" id="scanProgressBox"><div class="steps"><span class="step" id="scanStep1">1 · Сбор</span><span class="step" id="scanStep2">2 · JSON</span><span class="step" id="scanStep3">3 · Проверка</span><span class="step" id="scanStep4">4 · Карточки</span></div><progress class="progress" id="scanProgress" max="4" value="0" aria-label="Ход демонстрационной диагностики"></progress></div>
+<div class="notice hidden" id="scanStatus" role="status" aria-live="polite"></div>
+<p class="small" id="lastScanAt">Последнее сканирование: Не определено</p>
+<div class="row"><button class="secondary" id="detailsButton" aria-expanded="false" aria-controls="diagnosticsDetails">Подробный отчёт</button><button class="secondary" id="exportDiagnostic">Экспорт JSON</button></div>
+<div class="card panel hidden" id="diagnosticsDetails"><h3>Структурированные результаты · DEMO</h3><dl id="diagnosticsDetailsList"></dl></div>
 <p>Теперь можно загрузить локальный диагностический JSON-файл. Обработка происходит только в браузере. Файл никуда не отправляется.</p>
 <label for="hardwareFile">Импорт отчёта NAS Shell (.json)</label><input id="hardwareFile" type="file" style="max-width:100%;padding:12px;background:#1b3045;border-radius:10px">
-<div class="notice" id="hardwareImportStatus" role="status">⚠ Реальная диагностика ещё не подключена. Ниже показан пример.</div>
+<div class="notice" id="hardwareImportStatus" role="status" aria-live="polite">Реальная диагностика не подключена. DEMO-пример ниже.</div>
 <div id="hardwareImported" class="hidden"><h2>Загруженные сведения</h2><dl id="hardwareImportedList"></dl><p class="small">Импорт не подтверждает совместимость с DSM и не разрешает обновление.</p><button class="secondary" id="clearHardware">Вернуться к примеру</button></div>
-<div id="hardwareSample"><h2>DEMO · Эталонный пример</h2><dl><dt>Процессор</dt><dd>DEMO · Intel Core i5-12400</dd><dt>Оперативная память</dt><dd>DEMO · 32 ГБ</dd><dt>Сетевой адаптер</dt><dd>DEMO · Realtek RTL8125 · 2.5GbE</dd><dt>Профиль модели</dt><dd>DEMO · DS925+ (тестовая цель)</dd><dt>Текущая DSM</dt><dd>DEMO · 7.2.2 (исторические данные)</dd><dt>Хранилище</dt><dd>DEMO · SHR-1 · 3 × 6 ТБ</dd><dt>DSM 7.4</dt><dd class="yellow">DEMO · совместимость не проверена</dd></dl></div></div></section>
+<div id="hardwareSample"><h2>DEMO · Эталонный пример</h2><dl><dt>Процессор</dt><dd>DEMO · Тестовый x86_64</dd><dt>Оперативная память</dt><dd>DEMO · 16 ГБ</dd><dt>Сетевой адаптер</dt><dd>DEMO · demo-net0</dd><dt>Профиль модели</dt><dd>DEMO · Не выбрана</dd><dt>DSM</dt><dd>DEMO · Не выбрана</dd><dt>Хранилище</dt><dd>DEMO · demo-disk0, 64 ГБ</dd><dt>Совместимость</dt><dd class="yellow">DEMO · не подтверждена</dd></dl></div></div></section>
 <section id="compat" class="panel hidden">
 <div class="card"><h2>Предварительная проверка совместимости</h2><p>Проверка демонстрационная. Нет подтверждённой базы поддержки моделей, драйверов и версий DSM.</p>
-<label for="modelChoice">Профиль устройства</label><select id="modelChoice"><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select>
-<label for="dsmChoice">Целевая версия DSM</label><select id="dsmChoice"><option value="7.4">DSM 7.4</option><option value="7.3">DSM 7.3</option><option value="7.2">DSM 7.2</option></select>
+<label for="modelChoice">Профиль устройства · DEMO</label><select id="modelChoice"><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select>
+<label for="dsmChoice">Целевая версия DSM · DEMO</label><select id="dsmChoice"><option value="7.2">DSM 7.2</option><option value="7.3">DSM 7.3</option><option value="7.4">DSM 7.4</option></select>
 <div class="notice" id="compatResult" aria-live="polite">⚠ Статус: НЕ ПРОВЕРЕНО. Не используйте этот выбор для обновления рабочего NAS.</div>
 <p class="small">Данные не отправляются на сервер. Выбор модели не изменяет настройки устройства.</p>
 <button class="secondary" id="exportCompat">Скачать результат проверки (JSON)</button>
 </div></section>
 <section id="report" class="panel hidden"><div class="card"><h2>Демонстрационный отчёт</h2><p>Отчёт содержит только тестовые данные и не является результатом реального сканирования.</p><pre id="reportText"></pre><button class="secondary" id="exportReport">Скачать отчёт (JSON)</button></div></section>
-<footer>NAS Shell · 0.5 Demo · Только прототип интерфейса · Без сетевых запросов и операций записи</footer>
+<footer>NAS Shell · 0.6 · Только прототип интерфейса · Без сетевых запросов и операций записи</footer>
 </main></div>
-<script>
-"use strict";
-const sample={project:"NAS Shell",version:"0.1-alpha",mode:"DEMO",hardwareSource:"DEMO-sample-not-detected",cpu:"DEMO · Intel Core i5-12400",ram:"DEMO · 32 GB",nic:"DEMO · Realtek RTL8125",model:"DEMO · DS925+",targetDsm:"DEMO · 7.4",compatibility:"unverified",writesEnabled:false};
-const titles={home:["Добро пожаловать в NAS Shell","Понятная настройка NAS без сложных технических меню."],wizard:["Мастер настройки","Пошаговая подготовка с проверками безопасности."],hardware:["Оборудование","Пример конфигурации для будущих тестов."],report:["Диагностика","Пример отчёта без конфиденциальных данных."],compat:["Совместимость","Проверка без опасных предположений."]};
-function show(view){for(const el of document.querySelectorAll("main section[id]"))el.classList.toggle("hidden",el.id!==view);for(const b of document.querySelectorAll("nav button"))b.classList.toggle("active",b.dataset.view===view);document.getElementById("heading").textContent=titles[view][0];document.getElementById("subtitle").textContent=titles[view][1];}
-document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
-document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.goto)));
-let step=1;function renderStep(){for(let i=1;i<=3;i++){document.getElementById("wizard"+i).classList.toggle("hidden",i!==step);document.getElementById("step"+i).classList.toggle("current",i===step)}document.getElementById("back").disabled=step===1;document.getElementById("next").textContent=step===3?"Начать заново":"Продолжить →";if(step===3){const s=document.getElementById("scenario");document.getElementById("chosen").textContent="Выбран сценарий: "+s.options[s.selectedIndex].text+". Никакие изменения не выполнялись."}}
-document.getElementById("next").addEventListener("click",()=>{step=step===3?1:step+1;renderStep()});
-document.getElementById("back").addEventListener("click",()=>{if(step>1)step--;renderStep()});
-document.getElementById("reportText").textContent=JSON.stringify(sample,null,2);
-let importedHardware=null;
-const fileInput=document.getElementById("hardwareFile");
-function resetHardware(){importedHardware=null;fileInput.value="";document.getElementById("hardwareSample").classList.remove("hidden");document.getElementById("hardwareImported").classList.add("hidden");document.getElementById("hardwareImportStatus").textContent="⚠ Реальная диагностика ещё не подключена. Ниже показан пример.";}
-document.getElementById("clearHardware").addEventListener("click",resetHardware);
-fileInput.addEventListener("change",async event=>{
- const file=event.target.files[0];if(!file)return;
- const status=document.getElementById("hardwareImportStatus");
- if(file.size>65536){resetHardware();status.textContent="Ошибка: файл больше 64 КБ.";return;}
- try{
- const data=JSON.parse(await file.text());
- if(!data||typeof data!=="object"||Array.isArray(data)||data.schemaVersion!==1||data.kind!=="nas-shell-hardware"||!data.hardware||typeof data.hardware!=="object"||Array.isArray(data.hardware))throw Error("Неверный формат отчёта NAS Shell v1.");
- const keys=[["cpu","Процессор"],["ram","Оперативная память"],["nic","Сетевой адаптер"],["storage","Накопители"]];
- const list=document.getElementById("hardwareImportedList");list.replaceChildren();
- for(const [key,label] of keys){const value=data.hardware[key];if(value!==undefined && (typeof value!=="string"||value.length>200))throw Error("Некорректное поле: "+key);
- const dt=document.createElement("dt");dt.textContent=label;const dd=document.createElement("dd");dd.textContent=value||"Не определено";list.append(dt,dd);}
- importedHardware=data;document.getElementById("hardwareSample").classList.add("hidden");document.getElementById("hardwareImported").classList.remove("hidden");status.textContent="✓ Файл загружен локально. Достоверность сведений и совместимость не подтверждены.";
- }catch(e){resetHardware();status.textContent="Ошибка импорта: "+e.message;}
-});
-function compatibilityResult(){return {mode:"demo",profile:document.getElementById("modelChoice").value,targetDsm:document.getElementById("dsmChoice").value,hardware:"sample-not-detected",status:"unverified",reasons:["Нет проверенной матрицы совместимости","Нет проверки драйверов на реальном оборудовании"],safeToUpgrade:false,writesEnabled:false}}
-function updateCompatibility(){const result=compatibilityResult();document.getElementById("compatResult").textContent="⚠ Статус: НЕ ПРОВЕРЕНО. "+result.profile+" / DSM "+result.targetDsm+". Не обновляйте рабочий NAS на основании этой демонстрации."}
-document.getElementById("modelChoice").addEventListener("change",updateCompatibility);
-document.getElementById("dsmChoice").addEventListener("change",updateCompatibility);
-document.getElementById("exportCompat").addEventListener("click",()=>download(compatibilityResult(),"nas-shell-compatibility-demo.json"));
-updateCompatibility();
-function download(data,name){const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-document.getElementById("exportReport").addEventListener("click",()=>download(sample,"nas-shell-demo-report.json"));
-document.getElementById("exportPlan").addEventListener("click",()=>download({...sample,scenario:document.getElementById("scenario").value,action:"none",status:"demo-only"},"nas-shell-demo-plan.json"));
-</script>
-<script src="diagnostics.js"></script>
+<script src="domain/diagnostic.js"></script>
+<script src="domain/catalogs.js"></script>
+<script src="domain/compatibility.js"></script>
+<script src="domain/setup-project.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

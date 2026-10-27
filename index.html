@@ -43,6 +43,7 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <button class="active" data-view="home">◈ Обзор</button>
 <button data-view="wizard">▤ Мастер настройки</button>
 <button data-view="hardware">▦ Оборудование</button>
+<button data-view="compat">✓ Совместимость</button>
 <button data-view="report">≡ Отчёт диагностики</button>
 </nav>
 </aside>
@@ -66,13 +67,21 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <div class="row"><button class="secondary" id="back" disabled>Назад</button><button class="action" id="next">Продолжить →</button></div></div>
 </section>
 <section id="hardware" class="panel hidden"><div class="card"><h2>Эталонная конфигурация (пример)</h2><dl><dt>Процессор</dt><dd>Intel Core i5-12400</dd><dt>Оперативная память</dt><dd>32 ГБ</dd><dt>Сетевой адаптер</dt><dd>Realtek RTL8125 · 2.5GbE</dd><dt>Профиль модели</dt><dd>DS925+ (тестовая цель)</dd><dt>Текущая DSM</dt><dd>7.2.2 (исторические данные)</dd><dt>Хранилище</dt><dd>SHR-1 · 3 × 6 ТБ</dd><dt>DSM 7.4</dt><dd class="yellow">Совместимость не проверена</dd></dl></div></section>
+<section id="compat" class="panel hidden">
+<div class="card"><h2>Предварительная проверка совместимости</h2><p>Проверка демонстрационная. Нет подтверждённой базы поддержки моделей, драйверов и версий DSM.</p>
+<label for="modelChoice">Профиль устройства</label><select id="modelChoice"><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select>
+<label for="dsmChoice">Целевая версия DSM</label><select id="dsmChoice"><option value="7.4">DSM 7.4</option><option value="7.2.2">DSM 7.2.2</option></select>
+<div class="notice" id="compatResult" aria-live="polite">⚠ Статус: НЕ ПРОВЕРЕНО. Не используйте этот выбор для обновления рабочего NAS.</div>
+<p class="small">Данные не отправляются на сервер. Выбор модели не изменяет настройки устройства.</p>
+<button class="secondary" id="exportCompat">Скачать результат проверки (JSON)</button>
+</div></section>
 <section id="report" class="panel hidden"><div class="card"><h2>Демонстрационный отчёт</h2><p>Отчёт содержит только тестовые данные и не является результатом реального сканирования.</p><pre id="reportText"></pre><button class="secondary" id="exportReport">Скачать отчёт (JSON)</button></div></section>
 <footer>NAS Shell · 0.1 Alpha · Только прототип интерфейса · Без сетевых запросов и операций записи</footer>
 </main></div>
 <script>
 "use strict";
 const sample={project:"NAS Shell",version:"0.1-alpha",mode:"demo",hardwareSource:"sample-not-detected",cpu:"Intel Core i5-12400",ram:"32 GB",nic:"Realtek RTL8125",model:"DS925+",targetDsm:"7.4",compatibility:"unverified",writesEnabled:false};
-const titles={home:["Добро пожаловать в NAS Shell","Понятная настройка NAS без сложных технических меню."],wizard:["Мастер настройки","Пошаговая подготовка с проверками безопасности."],hardware:["Оборудование","Пример конфигурации для будущих тестов."],report:["Диагностика","Пример отчёта без конфиденциальных данных."]};
+const titles={home:["Добро пожаловать в NAS Shell","Понятная настройка NAS без сложных технических меню."],wizard:["Мастер настройки","Пошаговая подготовка с проверками безопасности."],hardware:["Оборудование","Пример конфигурации для будущих тестов."],report:["Диагностика","Пример отчёта без конфиденциальных данных."],compat:["Совместимость","Проверка без опасных предположений."]};
 function show(view){for(const el of document.querySelectorAll("main section[id]"))el.classList.toggle("hidden",el.id!==view);for(const b of document.querySelectorAll("nav button"))b.classList.toggle("active",b.dataset.view===view);document.getElementById("heading").textContent=titles[view][0];document.getElementById("subtitle").textContent=titles[view][1];}
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.goto)));
@@ -80,6 +89,12 @@ let step=1;function renderStep(){for(let i=1;i<=3;i++){document.getElementById("
 document.getElementById("next").addEventListener("click",()=>{step=step===3?1:step+1;renderStep()});
 document.getElementById("back").addEventListener("click",()=>{if(step>1)step--;renderStep()});
 document.getElementById("reportText").textContent=JSON.stringify(sample,null,2);
+function compatibilityResult(){return {mode:"demo",profile:document.getElementById("modelChoice").value,targetDsm:document.getElementById("dsmChoice").value,hardware:"sample-not-detected",status:"unverified",reasons:["Нет проверенной матрицы совместимости","Нет проверки драйверов на реальном оборудовании"],safeToUpgrade:false,writesEnabled:false}}
+function updateCompatibility(){const result=compatibilityResult();document.getElementById("compatResult").textContent="⚠ Статус: НЕ ПРОВЕРЕНО. "+result.profile+" / DSM "+result.targetDsm+". Не обновляйте рабочий NAS на основании этой демонстрации."}
+document.getElementById("modelChoice").addEventListener("change",updateCompatibility);
+document.getElementById("dsmChoice").addEventListener("change",updateCompatibility);
+document.getElementById("exportCompat").addEventListener("click",()=>download(compatibilityResult(),"nas-shell-compatibility-demo.json"));
+updateCompatibility();
 function download(data,name){const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 document.getElementById("exportReport").addEventListener("click",()=>download(sample,"nas-shell-demo-report.json"));
 document.getElementById("exportPlan").addEventListener("click",()=>download({...sample,scenario:document.getElementById("scenario").value,action:"none",status:"demo-only"},"nas-shell-demo-plan.json"));

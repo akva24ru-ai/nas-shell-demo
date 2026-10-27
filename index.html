@@ -66,7 +66,7 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <div id="wizard2" class="hidden"><label for="wizardModel">Модель Synology</label><select id="wizardModel"><option value="">Выберите модель</option><option value="DS925+">DS925+</option><option value="DS923+">DS923+</option><option value="DS3622xs+">DS3622xs+</option></select><p class="small">Наличие модели в каталоге не подтверждает поддержку.</p></div>
 <div id="wizard3" class="hidden"><label for="wizardDsm">Версия DSM</label><select id="wizardDsm"><option value="">Выберите версию</option><option value="7.2">DSM 7.2</option><option value="7.3">DSM 7.3</option><option value="7.4">DSM 7.4</option></select><p class="small">Отображение версии не означает поддержку моделью или ARC Loader.</p></div>
 <div id="wizard4" class="hidden"><h3>Результат проверки</h3><div class="notice" id="wizardCompatibility" aria-live="polite">Совместимость не подтверждена. Проверенные данные отсутствуют.</div><p>Реальные проверки моделей, DSM и ARC Loader на этом этапе не выполняются.</p></div>
-<div id="wizard5" class="hidden"><h3>Итоговая конфигурация</h3><dl id="setupProjectSummary"></dl><div class="notice">DEMO · Настоящий загрузочный образ не создаётся. ARC и DSM не изменяются.</div><button class="secondary" id="exportPlan">Сохранить проект в JSON</button></div>
+<div id="wizard5" class="hidden"><h3>Итоговая конфигурация</h3><dl id="setupProjectSummary"></dl><div class="notice">DEMO · Настоящий загрузочный образ не создаётся. ARC и DSM не изменяются.</div><button class="secondary" id="exportPlan">Сохранить проект в JSON</button><div class="notice hidden" id="wizardCompletion" role="status" aria-live="polite"></div><button class="secondary hidden" id="returnHome">Вернуться на главную</button></div>
 <p class="yellow" id="setupError" role="status" aria-live="polite"></p>
 <div class="row"><button class="secondary" id="back" disabled>Назад</button><button class="action" id="next">Продолжить →</button></div></div>
 </section>
@@ -98,6 +98,7 @@ footer{margin-top:45px;font-size:12px;color:#8298ad}
 <script src="domain/catalogs.js"></script>
 <script src="domain/compatibility.js"></script>
 <script src="domain/setup-project.js"></script>
+<script src="domain/browser-session.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

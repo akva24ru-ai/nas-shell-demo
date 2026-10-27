@@ -5,6 +5,7 @@
   const Catalogs = window.NasShellCatalogs;
   const Compatibility = window.NasShellCompatibility;
   const Setup = window.NasShellSetupProject;
+  const BrowserSession = window.NasShellBrowserSession;
   const titles = {
     home: ["Добро пожаловать в NAS Shell", "Понятная настройка NAS без сложных технических меню."],
     wizard: ["Мастер настройки", "Пошаговая подготовка с безопасными проверками."],
@@ -14,7 +15,10 @@
   };
   const demoReport = Diagnostic.DEMO_REPORT;
   const diagnosticSession = Diagnostic.createSession();
-  let wizardState = Setup.createState(null);
+  let browserStorage = null;
+  try { browserStorage = window.sessionStorage; } catch (_) { /* storage can be unavailable */ }
+  let wizardState = BrowserSession.load(browserStorage);
+  if (wizardState.report) diagnosticSession.importReport(wizardState.report);
   let wizardRunning = false;
 
   function show(view) {
@@ -75,6 +79,10 @@
     return diagnosticSession.getReport();
   }
 
+  function persistWizardSession() {
+    BrowserSession.save(browserStorage, wizardState, setupReport());
+  }
+
   function renderWizard() {
     for (let i = 1; i <= Setup.LAST_STEP; i++) {
       document.getElementById(`wizard${i}`).classList.toggle("hidden", wizardState.step !== i);
@@ -82,6 +90,10 @@
     }
     document.getElementById("back").disabled = wizardState.step === 1 || wizardRunning;
     document.getElementById("next").disabled = wizardRunning;
+    document.getElementById("next").classList.toggle("hidden", wizardState.completed === true);
+    document.getElementById("wizardCompletion").classList.toggle("hidden", wizardState.completed !== true);
+    document.getElementById("returnHome").classList.toggle("hidden", wizardState.completed !== true);
+    document.getElementById("wizardCompletion").textContent = BrowserSession.DEFAULT_MESSAGE;
     document.getElementById("next").textContent = wizardState.step === Setup.LAST_STEP ? "Завершить" : "Продолжить →";
     document.getElementById("setupError").textContent = wizardState.error;
     const report = setupReport();
@@ -111,6 +123,7 @@
     wizardState = Setup.selectModel(wizardState, modelChoice);
     wizardState = Setup.selectVersion(wizardState, dsmChoice);
     wizardState = { ...wizardState, error: "" };
+    persistWizardSession();
     renderWizard();
   }
 
@@ -125,32 +138,41 @@
   fillSelect(document.getElementById("modelChoice"), Catalogs.models, "Выберите модель", "DEMO · ");
   fillSelect(document.getElementById("wizardDsm"), Catalogs.dsmVersions, "Выберите версию", "");
   fillSelect(document.getElementById("dsmChoice"), Catalogs.dsmVersions, "Выберите версию", "DEMO · ");
+  document.getElementById("wizardModel").value = wizardState.model;
+  document.getElementById("wizardDsm").value = wizardState.dsm;
   document.getElementById("modelChoice").options[1].selected = true;
   document.getElementById("dsmChoice").options[1].selected = true;
 
   document.getElementById("wizardModel").addEventListener("change", () => {
     wizardState = Setup.selectModel(wizardState, document.getElementById("wizardModel").value);
+    persistWizardSession();
     renderWizard();
   });
   document.getElementById("wizardDsm").addEventListener("change", () => {
     wizardState = Setup.selectVersion(wizardState, document.getElementById("wizardDsm").value);
+    persistWizardSession();
     renderWizard();
   });
   document.getElementById("next").addEventListener("click", () => {
     if (wizardState.step === Setup.LAST_STEP) {
-      download(Setup.buildProject({ ...wizardState, report: setupReport() || demoReport }), "nas-shell-setup-project-demo.json");
+      wizardState = { ...wizardState, completed: true, error: "" };
+      persistWizardSession();
+      renderWizard();
       return;
     }
     wizardState = Setup.next(wizardState);
+    persistWizardSession();
     renderWizard();
   });
   document.getElementById("back").addEventListener("click", () => {
-    wizardState = Setup.back(wizardState);
+    wizardState = { ...Setup.back(wizardState), completed: false };
+    persistWizardSession();
     renderWizard();
   });
   document.getElementById("exportPlan").addEventListener("click", () => {
     download(Setup.buildProject({ ...wizardState, report: setupReport() || demoReport }), "nas-shell-setup-project-demo.json");
   });
+  document.getElementById("returnHome").addEventListener("click", () => show("home"));
 
   document.getElementById("scanHardware").addEventListener("click", async event => {
     if (wizardRunning) return;
@@ -171,6 +193,8 @@
       });
       progress.value = 4;
       diagnosticSession.recordScan(report);
+      wizardState = { ...wizardState, report };
+      persistWizardSession();
       showHardware(report);
       showDetails(report);
       document.getElementById("scanStatus").textContent = "Демонстрационная диагностика завершена. Данные оборудования получены автоматически";
@@ -217,6 +241,8 @@
     try {
       const report = Diagnostic.parseReport(await file.text());
       diagnosticSession.importReport(report);
+      wizardState = { ...wizardState, report };
+      persistWizardSession();
       showHardware(report);
       showDetails(report);
       status.textContent = "Диагностический отчёт успешно загружен из файла";
@@ -227,6 +253,8 @@
   });
   document.getElementById("clearHardware").addEventListener("click", () => {
     diagnosticSession.clear();
+    wizardState = { ...wizardState, report: null };
+    persistWizardSession();
     document.getElementById("hardwareFile").value = "";
     document.getElementById("hardwareSample").classList.remove("hidden");
     document.getElementById("hardwareImported").classList.add("hidden");
